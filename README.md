@@ -161,11 +161,13 @@ This adapter is the same workaround the pi extension uses; treat it as such. If
 you need a supported contract, Provider plan plus `dsh-llm-pi-ai` against
 `/provider/v1` is the intended path.
 
+Not affiliated with or endorsed by Command Code or DeepSeek.
+
 ## Test
 
 ```sh
-node tests/offline.mjs                           # 33 checks, no network
-node tests/live-adapter.mjs                      # default model, live endpoint
+npm test                  # 33 offline checks, no network
+npm run test:live         # drives the real endpoint, needs a Command Code key
 node tests/live-adapter.mjs deepseek/deepseek-v4-pro
 ```
 
@@ -173,3 +175,9 @@ The offline suite covers request serialization, the image path, stream
 translation, and configuration resolution. The live script drives the real
 endpoint through this plugin's own serialize and translate path with no harness
 runtime, and prints each turn's blocks, usage, and finish reason.
+
+The `pretest` hook runs [`scripts/link-dsh-deps.mjs`](scripts/link-dsh-deps.mjs),
+which links the `@deepseek-ai/*` packages this plugin imports out of your dsh
+installation. That is what makes the suite runnable from a bare clone; a plugin
+installed into a profile through `dsh plugin add` needs none of it, because the
+profile's loader supplies the resolution.

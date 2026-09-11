@@ -10,12 +10,16 @@
   },
   "files": [
     "src",
+    "scripts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "pretest": "node scripts/link-dsh-deps.mjs",
     "test": "node tests/offline.mjs",
-    "test:live": "node tests/live-adapter.mjs"
+    "pretest:live": "node scripts/link-dsh-deps.mjs",
+    "test:live": "node tests/live-adapter.mjs",
+    "link-deps": "node scripts/link-dsh-deps.mjs"
   },
   "license": "MIT",
   "author": {
