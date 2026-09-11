@@ -163,18 +163,60 @@ you need a supported contract, Provider plan plus `dsh-llm-pi-ai` against
 
 Not affiliated with or endorsed by Command Code or DeepSeek.
 
+## Keeping up with dsh
+
+dsh is a 0.x prerelease whose own README promises breaking changes, so an
+adapter has to re-earn its correctness on each release rather than assume it.
+`check:upgrade` does that in one command:
+
+```sh
+npm run check:upgrade                      # upgrade to the `next` tag, verify, roll back on failure
+npm run check:upgrade -- --dry-run         # print the plan, change nothing
+npm run check:upgrade -- --to 0.1.6-rc.1   # a specific version or tag
+npm run check:upgrade -- --skip-live       # offline checks only
+```
+
+It runs four steps:
+
+1. **Baseline** — verify the plugin against the *installed* version first. A
+   machine that is already broken must not have its failure blamed on the
+   upgrade, and a rollback target is only worth returning to if it worked.
+2. **Install** the target with `npm install -g`.
+3. **Verify** — the offline suite, then a real agent turn through a dsh profile
+   (skipped, with a reason, when no profile or credential is available).
+4. **Roll back** automatically when the target fails, and verify the restored
+   version too.
+
+Exit codes, which are what make it usable from automation:
+
+| Code | Meaning |
+|---|---|
+| `0` | the target is installed and verified |
+| `1` | the install failed; nothing was changed |
+| `2` | the target failed verification; the previous version was restored and verified |
+| `3` | the target failed verification and the rollback could not be verified |
+
+A rollback exits `2` rather than `0` on purpose: the machine is healthy again,
+but the upgrade did not happen, and a caller must be able to tell those apart.
+
+It also refuses to move backwards unless told to. dsh's dist-tags are not
+monotonic — `latest` currently resolves to an *older* build than `next` — so
+the default target is `next`, and a plain `npm install -g @deepseek-ai/dsh`
+would silently downgrade you. `--allow-downgrade` overrides the refusal.
+
 ## Test
 
 ```sh
-npm test                  # 33 offline checks, no network
+npm test                  # 38 offline checks, no network
 npm run test:live         # drives the real endpoint, needs a Command Code key
 node tests/live-adapter.mjs deepseek/deepseek-v4-pro
 ```
 
 The offline suite covers request serialization, the image path, stream
-translation, and configuration resolution. The live script drives the real
-endpoint through this plugin's own serialize and translate path with no harness
-runtime, and prints each turn's blocks, usage, and finish reason.
+translation, configuration resolution, and the version ordering the upgrade
+check depends on. The live script drives the real endpoint through this
+plugin's own serialize and translate path with no harness runtime, and prints
+each turn's blocks, usage, and finish reason.
 
 The `pretest` hook runs [`scripts/link-dsh-deps.mjs`](scripts/link-dsh-deps.mjs),
 which links the `@deepseek-ai/*` packages this plugin imports out of your dsh

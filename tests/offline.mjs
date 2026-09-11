@@ -9,6 +9,7 @@ import assert from 'node:assert/strict'
 
 import { CommandCodeAdapter } from '../src/adapter.js'
 import { Config, resolveAdapterOptions } from '../src/index.js'
+import { compareVersions, parseVersion } from '../scripts/version.mjs'
 import {
   inputModalitiesForModel,
   parseDiscoveryPayload,
@@ -481,6 +482,54 @@ check('an uncatalogued model resolves as text-only', async () => {
   const resolved = await adapter.resolveModel('commandcode', 'nobody/knows-this')
   assert.deepEqual(resolved.inputModalities, ['text'])
   assert.equal(resolved.context.contextWindow, 1_000_000)
+})
+
+console.log('\nupgrade-check version ordering')
+
+const version = text => parseVersion(text)
+const ordering = (left, right) => {
+  const result = compareVersions(version(left), version(right))
+  return result < 0 ? 'older' : result > 0 ? 'newer' : 'equal'
+}
+
+check('versions parse with and without a leading v, and prereleases split out', () => {
+  assert.deepEqual(version('1.2.3'), { major: 1, minor: 2, patch: 3, prerelease: undefined })
+  assert.deepEqual(version('v1.2.3'), { major: 1, minor: 2, patch: 3, prerelease: undefined })
+  assert.deepEqual(version('0.1.5-rc.2'), { major: 0, minor: 1, patch: 5, prerelease: 'rc.2' })
+  assert.deepEqual(version('  1.0.0-alpha.1  '), { major: 1, minor: 0, patch: 0, prerelease: 'alpha.1' })
+  assert.equal(version('not-a-version'), undefined)
+  assert.equal(version('1.2'), undefined)
+  assert.equal(version(''), undefined)
+})
+
+check('release ordering follows major, minor, then patch', () => {
+  assert.equal(ordering('1.0.0', '2.0.0'), 'older')
+  assert.equal(ordering('2.0.0', '1.9.9'), 'newer')
+  assert.equal(ordering('1.2.0', '1.10.0'), 'older')
+  assert.equal(ordering('0.1.5', '0.1.5'), 'equal')
+})
+
+check('a prerelease is older than its release', () => {
+  assert.equal(ordering('0.1.5-rc.2', '0.1.5'), 'older')
+  assert.equal(ordering('1.0.0-alpha', '1.0.0'), 'older')
+  assert.equal(ordering('1.0.0', '1.0.0-rc.1'), 'newer')
+})
+
+check('prerelease identifiers order numerically, and numeric before alphanumeric', () => {
+  assert.equal(ordering('0.1.5-rc.1', '0.1.5-rc.2'), 'older')
+  assert.equal(ordering('0.1.5-rc.10', '0.1.5-rc.9'), 'newer')
+  assert.equal(ordering('1.0.0-alpha', '1.0.0-beta'), 'older')
+  assert.equal(ordering('1.0.0-1', '1.0.0-alpha'), 'older')
+  assert.equal(ordering('1.0.5-alpha.2', '1.0.5-alpha.10'), 'older')
+  assert.equal(ordering('1.0.0-alpha', '1.0.0-alpha.1'), 'older')
+})
+
+check('the real dist-tag trap is detected: latest trails next', () => {
+  // 0.1.5-rc.1 is published as `latest` while `next` is 0.1.5-rc.2, so a plain
+  // `npm i -g` would move a user backwards. The check must see that.
+  assert.equal(ordering('0.1.5-rc.1', '0.1.5-rc.2'), 'older')
+  assert.equal(ordering('0.1.5-rc.2', '0.1.5-rc.1'), 'newer')
+  assert.equal(ordering('0.1.5-alpha.2', '0.1.5-rc.1'), 'older')
 })
 
 console.log(`\n${checks} checks passed\n`)

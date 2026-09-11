@@ -19,7 +19,9 @@
     "test": "node tests/offline.mjs",
     "pretest:live": "node scripts/link-dsh-deps.mjs",
     "test:live": "node tests/live-adapter.mjs",
-    "link-deps": "node scripts/link-dsh-deps.mjs"
+    "link-deps": "node scripts/link-dsh-deps.mjs",
+    "check:upgrade": "node scripts/check-upgrade.mjs",
+    "check:upgrade:dry": "node scripts/check-upgrade.mjs --dry-run"
   },
   "license": "MIT",
   "author": {
