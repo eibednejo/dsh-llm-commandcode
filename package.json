@@ -1,0 +1,60 @@
+{
+  "name": "dsh-llm-commandcode",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness (dsh) LLM adapter for Command Code, routing models through the generate endpoint a Go plan can reach — including image input.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node tests/offline.mjs",
+    "test:live": "node tests/live-adapter.mjs"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "eibednejo",
+    "url": "https://github.com/eibednejo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eibednejo/dsh-llm-commandcode.git"
+  },
+  "homepage": "https://github.com/eibednejo/dsh-llm-commandcode#readme",
+  "bugs": {
+    "url": "https://github.com/eibednejo/dsh-llm-commandcode/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "commandcode",
+    "command-code",
+    "llm-adapter",
+    "cordis-plugin",
+    "deepseek"
+  ],
+  "dsh": {
+    "plugin": true
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.1",
+    "@deepseek-ai/dsh-llm": "^0.1.5-rc.1",
+    "@deepseek-ai/dsh-settings": "^0.1.5-rc.1",
+    "@deepseek-ai/schemastery": "^3.18.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-attachment": "^0.1.5-rc.1",
+    "@deepseek-ai/dsh-timeout": "^0.1.5-rc.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
