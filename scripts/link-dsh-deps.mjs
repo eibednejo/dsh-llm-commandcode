@@ -41,9 +41,9 @@ function candidateScopes() {
   const push = path => {
     if (path !== undefined && path.length > 0) scopes.push(path)
   }
-  // A local install (this checkout declares the packages as peers).
-  push(join(packageRoot, 'node_modules', '@deepseek-ai'))
-  // The global dsh install, however it is laid out on this machine.
+  // The global dsh install, however it is laid out on this machine. The local
+  // `node_modules` is deliberately absent: it is this script's output, and
+  // treating it as a source would make a second run link from its own links.
   const globalRoots = [
     process.env.DSH_GLOBAL_ROOT,
     '/usr/local/lib/node_modules',
@@ -60,12 +60,30 @@ function candidateScopes() {
   return scopes
 }
 
+/** True when every required package already resolves from this checkout. */
+function alreadyResolvable() {
+  return REQUIRED.every((name) => {
+    try {
+      require.resolve(`${name}/package.json`)
+      return true
+    } catch {
+      return false
+    }
+  })
+}
+
+if (alreadyResolvable()) {
+  console.log('link-dsh-deps: every required package already resolves; nothing to link')
+  process.exit(0)
+}
+
 /** The first scope that can satisfy every required package. */
 function findCompleteScope() {
-  const scopes = candidateScopes()
-  for (const scope of scopes) {
+  for (const scope of candidateScopes()) {
     if (!existsSync(scope)) continue
-    if (REQUIRED.every(name => existsSync(join(scope, name.replace('@deepseek-ai/', ''))))) return scope
+    const complete = REQUIRED.every(name =>
+      existsSync(join(scope, name.replace('@deepseek-ai/', ''))))
+    if (complete) return scope
   }
   return undefined
 }
